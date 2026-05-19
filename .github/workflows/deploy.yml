@@ -1,0 +1,38 @@
+name: Build and Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        token_format: 'access_token'
+        workload_identity_provider: 'projects/383758038568/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+        service_account: 'github-actions-cloudrun@followsubthai-3a814.iam.gserviceaccount.com'
+
+    - name: Set up gcloud CLI
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Build and Deploy to Cloud Run
+      run: |
+        gcloud builds submit --tag gcr.io/followsubthai-3a814/followsubthai
+        gcloud run deploy followsubthai \
+          --image gcr.io/followsubthai-3a814/followsubthai \
+          --platform managed \
+          --region asia-southeast1 \
+          --allow-unauthenticated \
+          --port 8080
