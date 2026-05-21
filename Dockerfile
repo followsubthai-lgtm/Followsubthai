@@ -1,8 +1,6 @@
-FROM node:24-alpine
+FROM node:20
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-RUN npm run build --if-present
-EXPOSE 3000
 CMD ["npm", "start"]
