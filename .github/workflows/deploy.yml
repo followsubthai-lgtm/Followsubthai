@@ -1,21 +1,18 @@
 name: Build and Deploy to Cloud Run
-
 on:
   push:
     branches:
       - main
-
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
+      
     - id: 'auth'
       name: 'Authenticate to Google Cloud'
       uses: 'google-github-actions/auth@v2'
@@ -23,25 +20,25 @@ jobs:
         token_format: 'access_token'
         workload_identity_provider: 'projects/383758038568/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
         service_account: 'github-actions-cloudrun@followsubthai-3a814.iam.gserviceaccount.com'
-
+        
     - name: Set up gcloud CLI
       uses: google-github-actions/setup-gcloud@v2
-
-    # นี่คือขั้นตอน "สร้างคลัง" ที่มึงขาดไป
+      
+    # แก้ไขจาก >nul เป็น >/dev/null เพื่อให้ทำงานบน Ubuntu Runner ได้สมบูรณ์
     - name: Ensure Artifact Registry Exists
       run: |
         gcloud artifacts repositories describe followsubthai-repo \
-          --location=asia-southeast1 >nul 2>&1 || \
+          --location=asia-southeast1 >/dev/null 2>&1 || \
         gcloud artifacts repositories create followsubthai-repo \
           --repository-format=docker \
           --location=asia-southeast1 \
           --description="Demon Subtitle Production Repository"
-
+          
     - name: Build and Deploy to Cloud Run
       run: |
         # Build ไปที่ Artifact Registry ของจริง
         gcloud builds submit --tag asia-southeast1-docker.pkg.dev/followsubthai-3a814/followsubthai-repo/webapp .
-        
+                
         # Deploy จากคลังใหม่
         gcloud run deploy followsubthai \
           --image asia-southeast1-docker.pkg.dev/followsubthai-3a814/followsubthai-repo/webapp \
